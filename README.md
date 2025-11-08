@@ -4,7 +4,35 @@
 
 ## 🎯 **TESTE AGORA - CLIQUE NO BOTÃO ACIMA!** ⬆️
 
-Um sistema CRM completo desenvolvido em PHP com frontend moderno em JavaScript, projetado para gerenciar contatos, oportunidades de vendas, atividades e relacionamentos com clientes.
+# Sistema CRM Completo
+
+Sistema de gestão de relacionamento com clientes (CRM) desenvolvido em PHP puro com frontend Vue.js responsivo.
+
+## ✨ Características
+
+- **Frontend Responsivo**: Interface moderna com Bootstrap 5 e Vue.js
+- **Dashboard Completo**: Estatísticas em tempo real com gráficos interativos
+- **Gestão de Contatos**: CRUD completo de contatos e empresas
+- **Pipeline de Vendas**: Gestão completa de oportunidades por estágios
+- **Autenticação JWT**: Sistema seguro de autenticação
+- **Banco SQLite**: Sem dependências externas de banco de dados
+- **Deploy Simplificado**: Otimizado para Render.com
+
+## 🚀 Demo ao Vivo
+
+Sistema funcionando: [CRM System no Render](https://seu-app.onrender.com)
+
+**Credenciais de Acesso:**
+- Email: `demo@test.com`
+- Senha: `demo123`
+
+## 📊 Dados Demonstrativos
+
+O sistema inclui dados fictícios completos:
+- **8 usuários** com diferentes perfis (admin, vendedor, marketing, gerente, suporte, comercial, TI)
+- **10 empresas** de tecnologia com informações completas
+- **20 contatos** distribuídos entre as empresas
+- **20 oportunidades** em diferentes estágios do pipeline
 
 ### ⚡ **Acesso Instantâneo:**
 1. **Clique no badge "Open in Codespaces"** ☝️

@@ -22,6 +22,15 @@ const Utils = {
     },
 
     /**
+     * Format money values (alias for formatCurrency)
+     * @param {number} value - The numeric value to format
+     * @returns {string} Formatted money string
+     */
+    formatMoney: function(value) {
+        return this.formatCurrency(value);
+    },
+
+    /**
      * Format numbers with locale-specific formatting
      * @param {number} value - The numeric value to format
      * @param {number} decimals - Number of decimal places
