@@ -1,0 +1,11 @@
+{
+  "name": "crm-system",
+  "description": "Complete CRM System built with PHP and JavaScript",
+  "version": "1.0.0",
+  "engines": {
+    "php": "^8.2"
+  },
+  "scripts": {
+    "start": "php -S 0.0.0.0:$PORT -t public/"
+  }
+}
