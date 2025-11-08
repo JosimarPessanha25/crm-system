@@ -45,8 +45,54 @@ if ($composerLoaded && class_exists('DI\Container')) {
 
 // Load services
 try {
-    $container->set('logger', require __DIR__ . '/logger.php');
-    $container->set('database', require __DIR__ . '/database.php');
+    // Try different possible locations for logger
+    $loggerPaths = [
+        __DIR__ . '/logger.php',
+        __DIR__ . '/../config/logger.php',
+        __DIR__ . '/../app/config/logger.php'
+    ];
+    
+    $loggerPath = null;
+    foreach ($loggerPaths as $path) {
+        if (file_exists($path)) {
+            $loggerPath = $path;
+            break;
+        }
+    }
+    
+    if ($loggerPath) {
+        $container->set('logger', require $loggerPath);
+    } else {
+        // Simple fallback logger
+        $container->set('logger', new class {
+            public function info($message) { error_log("INFO: " . $message); }
+            public function error($message) { error_log("ERROR: " . $message); }
+            public function debug($message) { error_log("DEBUG: " . $message); }
+        });
+    }
+    
+    // Try different possible locations for database
+    $databasePaths = [
+        __DIR__ . '/database.php',
+        __DIR__ . '/../config/database.php',
+        __DIR__ . '/../app/config/database.php'
+    ];
+    
+    $databasePath = null;
+    foreach ($databasePaths as $path) {
+        if (file_exists($path)) {
+            $databasePath = $path;
+            break;
+        }
+    }
+    
+    if ($databasePath) {
+        $container->set('database', require $databasePath);
+    } else {
+        // Simple fallback database connection
+        $container->set('database', null);
+        error_log('Database configuration not found - running without database');
+    }
 
     // Bootstrap Eloquent ORM if available
     $capsule = $container->get('database');
