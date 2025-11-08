@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+/**
+ * CRM System Entry Point
+ * Robust initialization with fallbacks
+ */
+
 // Try to load Composer autoloader first
 $autoloadPath = __DIR__ . '/../vendor/autoload.php';
 $composerLoaded = false;
@@ -21,15 +26,18 @@ if (file_exists($autoloadPath)) {
     }
 } else {
     // Fallback to manual autoloader
-    require_once __DIR__ . '/../config/autoloader.php';
-    error_log('Running without Composer - using manual autoloader');
+    $manualAutoloader = __DIR__ . '/../config/autoloader.php';
+    if (file_exists($manualAutoloader)) {
+        require_once $manualAutoloader;
+        error_log('Running with manual autoloader - Composer not available');
+    }
 }
 
 // Create container based on available dependencies
 if ($composerLoaded && class_exists('DI\Container')) {
     $container = new \DI\Container();
 } else {
-    // Simple container implementation for fallback
+    // Simple container for fallback
     $container = new class {
         private array $services = [];
         
@@ -40,114 +48,203 @@ if ($composerLoaded && class_exists('DI\Container')) {
         public function get(string $name) {
             return $this->services[$name] ?? null;
         }
+        
+        public function has(string $name): bool {
+            return array_key_exists($name, $this->services);
+        }
     };
 }
 
-// Load services
+// Load services with fallbacks
 try {
-    // Try different possible locations for logger
+    // Logger setup
     $loggerPaths = [
         __DIR__ . '/logger.php',
         __DIR__ . '/../config/logger.php',
         __DIR__ . '/../app/config/logger.php'
     ];
     
-    $loggerPath = null;
+    $logger = null;
     foreach ($loggerPaths as $path) {
         if (file_exists($path)) {
-            $loggerPath = $path;
+            $logger = require $path;
             break;
         }
     }
     
-    if ($loggerPath) {
-        $container->set('logger', require $loggerPath);
-    } else {
-        // Simple fallback logger
-        $container->set('logger', new class {
-            public function info($message) { error_log("INFO: " . $message); }
-            public function error($message) { error_log("ERROR: " . $message); }
-            public function debug($message) { error_log("DEBUG: " . $message); }
-        });
+    if (!$logger) {
+        $logger = new class {
+            public function info($msg) { error_log("INFO: $msg"); }
+            public function error($msg) { error_log("ERROR: $msg"); }
+            public function debug($msg) { error_log("DEBUG: $msg"); }
+        };
     }
     
-    // Try different possible locations for database
+    $container->set('logger', $logger);
+    
+    // Database setup
     $databasePaths = [
         __DIR__ . '/database.php',
         __DIR__ . '/../config/database.php',
         __DIR__ . '/../app/config/database.php'
     ];
     
-    $databasePath = null;
+    $database = null;
     foreach ($databasePaths as $path) {
         if (file_exists($path)) {
-            $databasePath = $path;
+            $database = require $path;
             break;
         }
     }
     
-    if ($databasePath) {
-        $container->set('database', require $databasePath);
-    } else {
-        // Simple fallback database connection
-        $container->set('database', null);
-        error_log('Database configuration not found - running without database');
+    $container->set('database', $database);
+    
+    // Bootstrap database if available
+    if ($database && method_exists($database, 'setAsGlobal')) {
+        $database->setAsGlobal();
+        $database->bootEloquent();
     }
 
-    // Bootstrap Eloquent ORM if available
-    $capsule = $container->get('database');
-    if ($capsule && method_exists($capsule, 'setAsGlobal')) {
-        $capsule->setAsGlobal();
-        $capsule->bootEloquent();
-    }
+    // Route handling
+    handleRequest($composerLoaded, $container);
 
-    // Create Slim app
+} catch (Exception $e) {
+    showError($e, $composerLoaded ?? false);
+}
+
+function handleRequest(bool $composerLoaded, $container): void {
     if ($composerLoaded && class_exists('Slim\Factory\AppFactory')) {
-        \Slim\Factory\AppFactory::setContainer($container);
-        $app = \Slim\Factory\AppFactory::create();
-        
-        // Load routes
-        $routeLoader = require __DIR__ . '/../config/routes.php';
-        $routeLoader($app, $container);
-        
-        // Run the application
-        $app->run();
+        // Try full Slim Framework
+        try {
+            $app = \Slim\Factory\AppFactory::create();
+            
+            // Basic health check route
+            $app->get('/api/health', function ($request, $response) use ($composerLoaded) {
+                $response->getBody()->write(json_encode([
+                    'status' => 'healthy',
+                    'timestamp' => date('c'),
+                    'version' => '1.0.0',
+                    'environment' => $_ENV['APP_ENV'] ?? 'production',
+                    'composer' => $composerLoaded
+                ]));
+                return $response->withHeader('Content-Type', 'application/json');
+            });
+            
+            // Serve frontend
+            $app->get('/', function ($request, $response) use ($composerLoaded) {
+                $response->getBody()->write(getStatusPage($composerLoaded));
+                return $response->withHeader('Content-Type', 'text/html');
+            });
+            
+            $app->run();
+            return;
+            
+        } catch (Exception $e) {
+            error_log('Slim error: ' . $e->getMessage());
+        }
+    }
+    
+    // Simple fallback routing
+    $uri = $_SERVER['REQUEST_URI'] ?? '/';
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    
+    if (strpos($uri, '/api/health') === 0 && $method === 'GET') {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'healthy',
+            'timestamp' => date('c'),
+            'version' => '1.0.0',
+            'environment' => $_ENV['APP_ENV'] ?? 'production',
+            'composer_loaded' => $composerLoaded,
+            'routing' => 'fallback'
+        ]);
     } else {
-        // Simple fallback response
         header('Content-Type: text/html');
-        echo '<!DOCTYPE html>
+        echo getStatusPage($composerLoaded);
+    }
+}
+
+function getStatusPage(bool $composerLoaded): string {
+    return '<!DOCTYPE html>
 <html>
 <head>
     <title>CRM System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; margin: 50px; }
-        .status { background: #e7f3ff; padding: 20px; border-radius: 8px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; padding: 40px; background: #f5f5f5; 
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .status { 
+            background: white; padding: 30px; border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        .header { color: #2563eb; margin-bottom: 20px; }
+        .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .info-item { padding: 15px; background: #f8fafc; border-radius: 8px; }
+        .info-item strong { color: #1e293b; }
+        .api-section { 
+            background: white; padding: 25px; border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .endpoint { 
+            background: #f1f5f9; padding: 12px; border-radius: 6px; 
+            margin: 10px 0; font-family: monospace;
+        }
+        .endpoint a { color: #2563eb; text-decoration: none; }
+        .endpoint a:hover { text-decoration: underline; }
+        .status-badge { 
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: bold;
+        }
+        .online { background: #dcfce7; color: #166534; }
+        .warning { background: #fef3c7; color: #92400e; }
     </style>
 </head>
 <body>
-    <div class="status">
-        <h1>🚀 CRM System</h1>
-        <p><strong>Status:</strong> Online</p>
-        <p><strong>Version:</strong> 1.0.0</p>
-        <p><strong>Environment:</strong> ' . ($_ENV['APP_ENV'] ?? 'production') . '</p>
-        <p><strong>PHP Version:</strong> ' . PHP_VERSION . '</p>
-        <p><strong>Composer:</strong> ' . ($composerLoaded ? '✅ Loaded' : '❌ Not Available') . '</p>
+    <div class="container">
+        <div class="status">
+            <h1 class="header">🚀 CRM System</h1>
+            <span class="status-badge online">System Online</span>
+            
+            <div class="info">
+                <div class="info-item">
+                    <strong>Version:</strong> 1.0.0<br>
+                    <strong>Environment:</strong> ' . ($_ENV['APP_ENV'] ?? 'production') . '
+                </div>
+                <div class="info-item">
+                    <strong>PHP:</strong> ' . PHP_VERSION . '<br>
+                    <strong>Composer:</strong> ' . ($composerLoaded ? '✅ Loaded' : '❌ Fallback') . '
+                </div>
+            </div>
+        </div>
+        
+        <div class="api-section">
+            <h2>📡 API Status</h2>
+            <p>Basic API endpoints are available:</p>
+            
+            <div class="endpoint">
+                <strong>GET</strong> <a href="/api/health">/api/health</a> - System health check
+            </div>
+            
+            <div class="endpoint">
+                <strong>Framework:</strong> ' . ($composerLoaded ? 'Slim Framework' : 'Basic Routing') . '
+            </div>
+        </div>
     </div>
 </body>
 </html>';
-    }
+}
 
-} catch (Exception $e) {
-    // Fallback error page
+function showError(Exception $e, bool $composerLoaded): void {
     http_response_code(500);
     header('Content-Type: application/json');
     echo json_encode([
-        'error' => 'Application initialization failed',
+        'error' => 'Application Error',
         'message' => $e->getMessage(),
-        'debug' => [
-            'composer_loaded' => $composerLoaded,
-            'autoload_path' => $autoloadPath,
-            'autoload_exists' => file_exists($autoloadPath)
-        ]
+        'composer_loaded' => $composerLoaded,
+        'timestamp' => date('c')
     ]);
 }
