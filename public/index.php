@@ -3,21 +3,26 @@
 declare(strict_types=1);
 
 /**
- * CRM System - Unified Entry Point
- * Routes to bootstrap system for complete functionality
+ * CRM System - Main Entry Point
+ * Delegates to bootstrap for unified functionality
  */
 
-// Check if bootstrap exists and delegate to it
+// Redirect to bootstrap system to avoid function conflicts
 $bootstrapFile = __DIR__ . '/bootstrap.php';
+
 if (file_exists($bootstrapFile)) {
+    // Include bootstrap and handle request
     require_once $bootstrapFile;
-    
-    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-    $method = $_SERVER['REQUEST_METHOD'];
-    
-    handleRequest($uri, $method);
     exit;
 }
+
+// Fallback if bootstrap doesn't exist
+http_response_code(500);
+header('Content-Type: application/json');
+echo json_encode([
+    'error' => 'System bootstrap not found',
+    'status' => 'error'
+]);
 
 /**
  * CRM System Entry Point

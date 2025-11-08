@@ -1,6 +1,6 @@
 RewriteEngine On
 
-# Unified CRM routing through bootstrap
+# Route all requests to bootstrap.php (except existing files)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ bootstrap.php [QSA,L]
