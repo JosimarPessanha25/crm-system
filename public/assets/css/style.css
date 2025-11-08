@@ -1,0 +1,787 @@
+/* ==========================================
+   CRM System - Main Stylesheet
+   Based on wireframe specifications
+   ========================================== */
+
+/* CSS Variables - Color Palette from wireframes */
+:root {
+  --primary-color: #2563eb;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --background-color: #f8fafc;
+  --card-color: #ffffff;
+  --text-dark: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --border-radius: 0.5rem;
+}
+
+/* Base Styles */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+/* Override Bootstrap primary color */
+.btn-primary,
+.bg-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* Toast Container */
+.toast-container {
+  z-index: 1100;
+}
+
+/* Navigation Styles */
+.navbar-brand {
+  font-size: 1.5rem;
+}
+
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--border-radius);
+}
+
+/* Notification dropdown width */
+.notification-dropdown {
+  width: 300px;
+}
+
+/* Initial loading height */
+.initial-loading {
+  height: 60vh;
+}
+
+/* Cards */
+.card {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  background-color: var(--card-color);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+}
+
+/* Dashboard Specific Styles */
+.dashboard-card {
+  height: 100%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+}
+
+.dashboard-kpi {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.dashboard-kpi .display-4 {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.dashboard-kpi .text-success {
+  color: var(--success-color) !important;
+}
+
+.dashboard-kpi .text-danger {
+  color: var(--error-color) !important;
+}
+
+.dashboard-kpi .text-warning {
+  color: var(--warning-color) !important;
+}
+
+/* Table Styles */
+.table {
+  background-color: var(--card-color);
+}
+
+.table th {
+  border-top: none;
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* DataTables Custom Styling */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+  margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+/* Pipeline/Kanban Styles */
+.pipeline-container {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.pipeline-stage {
+  min-width: 300px;
+  max-width: 350px;
+  margin-right: 1rem;
+}
+
+.pipeline-stage-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 1rem;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  font-weight: 600;
+}
+
+.pipeline-stage-body {
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  padding: 1rem;
+  min-height: 400px;
+}
+
+.opportunity-card {
+  background-color: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.opportunity-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.opportunity-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--success-color);
+}
+
+.opportunity-probability {
+  background-color: var(--background-color);
+  border-radius: 1rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Activity Styles */
+.activity-item {
+  border-left: 4px solid var(--border-color);
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+.activity-item.overdue {
+  border-left-color: var(--error-color);
+}
+
+.activity-item.today {
+  border-left-color: var(--warning-color);
+}
+
+.activity-item.completed {
+  border-left-color: var(--success-color);
+  opacity: 0.7;
+}
+
+.activity-time {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Contact Styles */
+.contact-score {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+}
+
+.contact-score.high {
+  background-color: var(--success-color);
+}
+
+.contact-score.medium {
+  background-color: var(--warning-color);
+}
+
+.contact-score.low {
+  background-color: var(--error-color);
+}
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-right: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.tag-secondary {
+  background-color: var(--secondary-color);
+}
+
+.tag-success {
+  background-color: var(--success-color);
+}
+
+.tag-warning {
+  background-color: var(--warning-color);
+}
+
+.tag-danger {
+  background-color: var(--error-color);
+}
+
+/* Forms */
+.form-control,
+.form-select {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+}
+
+/* Buttons */
+.btn {
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-active {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.status-inactive {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: var(--secondary-color);
+}
+
+.status-pending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.status-closed {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+}
+
+/* Charts */
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.chart-container canvas {
+  max-height: 300px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  /* Hide desktop navigation on mobile */
+  .navbar-nav .nav-item {
+    display: none;
+  }
+  
+  /* Adjust main content padding for bottom navigation */
+  main {
+    padding-bottom: 80px;
+  }
+  
+  /* Stack dashboard cards */
+  .dashboard-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Make pipeline horizontal scrollable */
+  .pipeline-container {
+    display: flex;
+    overflow-x: auto;
+    padding: 1rem 0;
+  }
+  
+  .pipeline-stage {
+    flex-shrink: 0;
+  }
+  
+  /* Adjust table for mobile */
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  /* Form adjustments */
+  .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .btn-group .btn {
+    width: auto;
+    margin-bottom: 0;
+  }
+}
+
+@media (min-width: 769px) {
+  /* Hide mobile bottom navigation on desktop */
+  #mobileBottomNav {
+    display: none !important;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Loading States */
+.skeleton {
+  background: linear-gradient(90deg, var(--background-color) 25%, rgba(255, 255, 255, 0.5) 50%, var(--background-color) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-text {
+  height: 1rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-title {
+  height: 1.5rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  width: 60%;
+}
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus indicators */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: #000000;
+    --text-muted: #000000;
+  }
+  
+  .card {
+    border: 2px solid #000000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .navbar,
+  #mobileBottomNav,
+  .btn,
+  .toast-container {
+    display: none !important;
+  }
+  
+  .card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* Dashboard specific styles */
+.dashboard-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-kpi {
+    padding: 1.5rem;
+}
+
+.pipeline-stage-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.pipeline-stage-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stage-icon {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+}
+
+/* Activity specific styles */
+.activity-item {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.activity-item:hover {
+    background-color: var(--bs-gray-50);
+    border-left-color: var(--bs-primary);
+}
+
+.activity-item.overdue {
+    border-left-color: var(--bs-warning);
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.activity-time {
+    font-size: 0.875rem;
+    color: var(--bs-gray-600);
+}
+
+.activity-stat-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+}
+
+.activity-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    margin-bottom: 0.5rem;
+}
+
+.activity-type-icon {
+    width: 24px;
+    text-align: center;
+}
+
+/* Kanban board styles */
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    min-height: 500px;
+}
+
+.kanban-column {
+    flex: 0 0 280px;
+    background: var(--bs-gray-50);
+    border-radius: 8px;
+    padding: 0;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.kanban-header {
+    padding: 1rem;
+    border-bottom: 2px solid transparent;
+    border-radius: 8px 8px 0 0;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.kanban-cards {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.kanban-card {
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.kanban-card.overdue {
+    border-left: 4px solid var(--bs-warning);
+}
+
+.kanban-card .card-header {
+    padding: 0.75rem;
+    background: transparent;
+    border: none;
+}
+
+.kanban-card .card-body {
+    padding: 0 0.75rem 0.75rem;
+}
+
+/* Contact avatar styles */
+.contact-avatar {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-placeholder {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bs-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Table row hover effects */
+.table tbody tr:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+}
+
+.contact-row:hover,
+.opportunity-row:hover,
+.activity-row:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+}
+
+/* Progress bars for opportunities */
+.progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+/* Priority badges */
+.badge.bg-baixa { background-color: var(--bs-secondary) !important; }
+.badge.bg-media { background-color: var(--bs-primary) !important; }
+.badge.bg-alta { background-color: var(--bs-warning) !important; }
+.badge.bg-urgente { background-color: var(--bs-danger) !important; }
+
+/* Additional skeleton loading styles */
+.skeleton-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+}
+
+.skeleton-badge {
+    width: 60px;
+    height: 24px;
+    border-radius: 12px;
+}
+
+.skeleton-actions {
+    width: 100px;
+    height: 32px;
+    border-radius: 4px;
+}
+
+.skeleton-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin: 0 auto;
+}
+
+.skeleton-card {
+    height: 120px;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+/* Component specific responsive adjustments */
+@media (max-width: 768px) {
+    .kanban-board {
+        flex-direction: column;
+    }
+    
+    .kanban-column {
+        flex: none;
+        max-height: none;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .dashboard-kpi {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .btn-group {
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+}

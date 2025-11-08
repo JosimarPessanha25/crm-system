@@ -1,0 +1,99 @@
+# CRM System - Git Ignore File
+
+# Composer dependencies
+/vendor/
+composer.phar
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+
+# Logs
+/logs/*.log
+/storage/logs/*.log
+*.log
+
+# Cache files
+/cache/*
+/storage/cache/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# Database
+*.sqlite
+*.sqlite3
+
+# Backup files
+/backups/*
+*.sql
+*.dump
+
+# Uploads and user files
+/uploads/*
+/storage/uploads/*
+/public/uploads/*
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Windows
+*.lnk
+
+# Node.js (if using npm for frontend tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+/tmp/*
+/temp/*
+
+# Configuration files with sensitive data
+config/database_production.php
+config/secrets.php
+
+# Build artifacts
+/dist/
+/build/
+
+# Testing
+/tests/coverage/
+.phpunit.result.cache
+
+# Local development
+php_errors.log
+error_log
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Deployment scripts (keep examples)
+deploy_production.sh
+deploy_production.ps1
+
+# Keep example files but ignore actual config
+!.env.example
+!config/database.example.php
+
+# Keep empty directories
+!*/
+!*/.gitkeep

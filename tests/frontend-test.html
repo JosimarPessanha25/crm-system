@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM System - Frontend Integration Test</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .test-result {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .test-pass {
+            background-color: #d1e7dd;
+            border: 1px solid #badbcc;
+            color: #0f5132;
+        }
+        
+        .test-fail {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .test-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        
+        #testOutput {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .component-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="h3 mb-4">
+                    <i class="fas fa-cog me-2 text-primary"></i>
+                    CRM System - Frontend Integration Test
+                </h1>
+                
+                <!-- Test Progress -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Test Progress</h5>
+                        <div class="progress mb-3" style="height: 30px;">
+                            <div class="progress-bar bg-success" id="progressBar" role="progressbar" style="width: 0%">
+                                <span id="progressText">0%</span>
+                            </div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col">
+                                <div class="h4 text-success mb-1" id="passedCount">0</div>
+                                <div class="small text-muted">Passed</div>
+                            </div>
+                            <div class="col">
+                                <div class="h4 text-danger mb-1" id="failedCount">0</div>
+                                <div class="small text-muted">Failed</div>
+                            </div>
+                            <div class="col">
+                                <div class="h4 text-info mb-1" id="totalCount">0</div>
+                                <div class="small text-muted">Total</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Test Controls -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Test Controls</h5>
+                        <div class="btn-group me-3">
+                            <button class="btn btn-primary" onclick="runAllTests()">
+                                <i class="fas fa-play me-1"></i>Run All Tests
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearResults()">
+                                <i class="fas fa-trash me-1"></i>Clear Results
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-info" onclick="testCoreComponents()">Test Core</button>
+                            <button class="btn btn-outline-info" onclick="testPageComponents()">Test Pages</button>
+                            <button class="btn btn-outline-info" onclick="testIntegration()">Test Integration</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Test Output -->
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Test Results</h5>
+                        <div id="testOutput">
+                            <div class="text-muted text-center py-4">
+                                <i class="fas fa-flask fa-3x mb-3"></i>
+                                <p>Click "Run All Tests" to start testing the CRM system components</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden test area for loading components -->
+    <div id="testArea" style="display: none;"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    
+    <!-- DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Load CRM Components -->
+    <script src="../public/assets/js/config.js"></script>
+    <script src="../public/assets/js/utils.js"></script>
+    <script src="../public/assets/js/api.js"></script>
+    <script src="../public/assets/js/auth.js"></script>
+    <script src="../public/assets/js/components/dashboard.js"></script>
+    <script src="../public/assets/js/components/contacts.js"></script>
+    <script src="../public/assets/js/components/opportunities.js"></script>
+    <script src="../public/assets/js/components/activities.js"></script>
+    <script src="../public/assets/js/app.js"></script>
+
+    <script>
+        // Frontend Integration Test Suite
+        class FrontendTester {
+            constructor() {
+                this.results = [];
+                this.passedCount = 0;
+                this.failedCount = 0;
+                this.currentTest = 0;
+                this.totalTests = 0;
+            }
+            
+            // Test result recording
+            recordResult(testName, passed, message, details = null) {
+                this.results.push({
+                    name: testName,
+                    passed: passed,
+                    message: message,
+                    details: details,
+                    timestamp: new Date()
+                });
+                
+                if (passed) {
+                    this.passedCount++;
+                } else {
+                    this.failedCount++;
+                }
+                
+                this.currentTest++;
+                this.updateProgress();
+                this.displayResult(testName, passed, message, details);
+            }
+            
+            // Update progress indicators
+            updateProgress() {
+                const percentage = this.totalTests > 0 ? (this.currentTest / this.totalTests) * 100 : 0;
+                
+                document.getElementById('progressBar').style.width = percentage + '%';
+                document.getElementById('progressText').textContent = Math.round(percentage) + '%';
+                document.getElementById('passedCount').textContent = this.passedCount;
+                document.getElementById('failedCount').textContent = this.failedCount;
+                document.getElementById('totalCount').textContent = this.currentTest;
+            }
+            
+            // Display individual test result
+            displayResult(testName, passed, message, details) {
+                const output = document.getElementById('testOutput');
+                const resultDiv = document.createElement('div');
+                
+                const icon = passed ? '✅' : '❌';
+                const cssClass = passed ? 'test-pass' : 'test-fail';
+                
+                resultDiv.className = `test-result ${cssClass}`;
+                resultDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${icon} ${testName}</strong>
+                            <div class="mt-1">${message}</div>
+                            ${details ? `<small class="text-muted">${details}</small>` : ''}
+                        </div>
+                        <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                    </div>
+                `;
+                
+                if (output.children.length === 1 && output.children[0].classList.contains('text-muted')) {
+                    output.innerHTML = '';
+                }
+                
+                output.appendChild(resultDiv);
+                output.scrollTop = output.scrollHeight;
+            }
+            
+            // Clear all results
+            clear() {
+                this.results = [];
+                this.passedCount = 0;
+                this.failedCount = 0;
+                this.currentTest = 0;
+                this.totalTests = 0;
+                
+                document.getElementById('testOutput').innerHTML = `
+                    <div class="text-muted text-center py-4">
+                        <i class="fas fa-flask fa-3x mb-3"></i>
+                        <p>Ready to run tests...</p>
+                    </div>
+                `;
+                
+                this.updateProgress();
+            }
+            
+            // Run all tests
+            async runAllTests() {
+                this.clear();
+                this.totalTests = 25; // Estimate total tests
+                
+                this.displayResult('Test Suite', true, 'Starting comprehensive frontend integration tests...', 'info');
+                
+                await this.testCoreComponents();
+                await this.testPageComponents();
+                await this.testIntegration();
+                
+                this.displayFinalResults();
+            }
+            
+            // Test core components
+            async testCoreComponents() {
+                this.displayResult('Core Components', true, 'Testing core JavaScript components...', 'info');
+                
+                // Test Config object
+                try {
+                    const hasConfig = typeof Config !== 'undefined';
+                    const hasConstants = hasConfig && Config.constants;
+                    const hasDataTables = hasConfig && Config.dataTables;
+                    
+                    this.recordResult('Config Object', hasConfig, 
+                        hasConfig ? 'Config object loaded successfully' : 'Config object not found');
+                    
+                    this.recordResult('Config Constants', hasConstants, 
+                        hasConstants ? 'Configuration constants available' : 'Configuration constants missing');
+                        
+                    this.recordResult('DataTables Config', hasDataTables, 
+                        hasDataTables ? 'DataTables configuration loaded' : 'DataTables configuration missing');
+                } catch (error) {
+                    this.recordResult('Config Error', false, `Config test failed: ${error.message}`);
+                }
+                
+                // Test Utils object
+                try {
+                    const hasUtils = typeof Utils !== 'undefined';
+                    const hasMethods = hasUtils && typeof Utils.formatCurrency === 'function';
+                    const testFormat = hasMethods ? Utils.formatCurrency(1234.56) : null;
+                    
+                    this.recordResult('Utils Object', hasUtils, 
+                        hasUtils ? 'Utils object loaded successfully' : 'Utils object not found');
+                        
+                    this.recordResult('Utils Methods', hasMethods, 
+                        hasMethods ? 'Utils methods available' : 'Utils methods missing');
+                        
+                    if (testFormat) {
+                        this.recordResult('Utils Formatting', testFormat.includes('1.234,56'), 
+                            `Currency formatting test: ${testFormat}`);
+                    }
+                } catch (error) {
+                    this.recordResult('Utils Error', false, `Utils test failed: ${error.message}`);
+                }
+                
+                // Test API object
+                try {
+                    const hasAPI = typeof API !== 'undefined';
+                    const hasEndpoints = hasAPI && API.contacts && API.opportunities && API.activities;
+                    
+                    this.recordResult('API Object', hasAPI, 
+                        hasAPI ? 'API client loaded successfully' : 'API client not found');
+                        
+                    this.recordResult('API Endpoints', hasEndpoints, 
+                        hasEndpoints ? 'All API endpoints configured' : 'Some API endpoints missing');
+                } catch (error) {
+                    this.recordResult('API Error', false, `API test failed: ${error.message}`);
+                }
+                
+                // Test Auth object
+                try {
+                    const hasAuth = typeof Auth !== 'undefined';
+                    const hasMethods = hasAuth && typeof Auth.login === 'function';
+                    
+                    this.recordResult('Auth Object', hasAuth, 
+                        hasAuth ? 'Auth module loaded successfully' : 'Auth module not found');
+                        
+                    this.recordResult('Auth Methods', hasMethods, 
+                        hasMethods ? 'Auth methods available' : 'Auth methods missing');
+                } catch (error) {
+                    this.recordResult('Auth Error', false, `Auth test failed: ${error.message}`);
+                }
+            }
+            
+            // Test page components
+            async testPageComponents() {
+                this.displayResult('Page Components', true, 'Testing page components...', 'info');
+                
+                // Test Dashboard component
+                try {
+                    const hasDashboard = typeof Dashboard !== 'undefined';
+                    const hasRender = hasDashboard && typeof Dashboard.render === 'function';
+                    const hasData = hasDashboard && Dashboard.data;
+                    
+                    this.recordResult('Dashboard Component', hasDashboard, 
+                        hasDashboard ? 'Dashboard component loaded' : 'Dashboard component not found');
+                        
+                    this.recordResult('Dashboard Methods', hasRender, 
+                        hasRender ? 'Dashboard render method available' : 'Dashboard render method missing');
+                        
+                    this.recordResult('Dashboard Data', hasData, 
+                        hasData ? 'Dashboard data structure initialized' : 'Dashboard data structure missing');
+                } catch (error) {
+                    this.recordResult('Dashboard Error', false, `Dashboard test failed: ${error.message}`);
+                }
+                
+                // Test Contacts component
+                try {
+                    const hasContacts = typeof Contacts !== 'undefined';
+                    const hasRender = hasContacts && typeof Contacts.render === 'function';
+                    const hasLoadContacts = hasContacts && typeof Contacts.loadContacts === 'function';
+                    
+                    this.recordResult('Contacts Component', hasContacts, 
+                        hasContacts ? 'Contacts component loaded' : 'Contacts component not found');
+                        
+                    this.recordResult('Contacts Methods', hasRender && hasLoadContacts, 
+                        (hasRender && hasLoadContacts) ? 'Contacts methods available' : 'Some Contacts methods missing');
+                } catch (error) {
+                    this.recordResult('Contacts Error', false, `Contacts test failed: ${error.message}`);
+                }
+                
+                // Test Opportunities component
+                try {
+                    const hasOpportunities = typeof Opportunities !== 'undefined';
+                    const hasRender = hasOpportunities && typeof Opportunities.render === 'function';
+                    const hasToggleView = hasOpportunities && typeof Opportunities.toggleView === 'function';
+                    
+                    this.recordResult('Opportunities Component', hasOpportunities, 
+                        hasOpportunities ? 'Opportunities component loaded' : 'Opportunities component not found');
+                        
+                    this.recordResult('Opportunities Methods', hasRender && hasToggleView, 
+                        (hasRender && hasToggleView) ? 'Opportunities methods available' : 'Some Opportunities methods missing');
+                } catch (error) {
+                    this.recordResult('Opportunities Error', false, `Opportunities test failed: ${error.message}`);
+                }
+                
+                // Test Activities component
+                try {
+                    const hasActivities = typeof Activities !== 'undefined';
+                    const hasRender = hasActivities && typeof Activities.render === 'function';
+                    const hasToggleView = hasActivities && typeof Activities.toggleView === 'function';
+                    
+                    this.recordResult('Activities Component', hasActivities, 
+                        hasActivities ? 'Activities component loaded' : 'Activities component not found');
+                        
+                    this.recordResult('Activities Methods', hasRender && hasToggleView, 
+                        (hasRender && hasToggleView) ? 'Activities methods available' : 'Some Activities methods missing');
+                } catch (error) {
+                    this.recordResult('Activities Error', false, `Activities test failed: ${error.message}`);
+                }
+            }
+            
+            // Test integration
+            async testIntegration() {
+                this.displayResult('Integration Tests', true, 'Testing component integration...', 'info');
+                
+                // Test App object and component registration
+                try {
+                    const hasApp = typeof App !== 'undefined';
+                    const hasComponents = hasApp && App.components;
+                    const hasDashboard = hasComponents && App.components.dashboard;
+                    const hasContacts = hasComponents && App.components.contacts;
+                    
+                    this.recordResult('App Object', hasApp, 
+                        hasApp ? 'Main App controller loaded' : 'Main App controller not found');
+                        
+                    this.recordResult('Component Registration', hasComponents, 
+                        hasComponents ? 'Component registration system working' : 'Component registration failed');
+                        
+                    this.recordResult('Dashboard Registration', hasDashboard, 
+                        hasDashboard ? 'Dashboard component registered' : 'Dashboard component not registered');
+                        
+                    this.recordResult('Contacts Registration', hasContacts, 
+                        hasContacts ? 'Contacts component registered' : 'Contacts component not registered');
+                } catch (error) {
+                    this.recordResult('Integration Error', false, `Integration test failed: ${error.message}`);
+                }
+                
+                // Test DOM manipulation
+                try {
+                    const testArea = document.getElementById('testArea');
+                    testArea.innerHTML = '<div id="pageContent"></div>';
+                    
+                    // Test Dashboard rendering
+                    if (typeof Dashboard !== 'undefined') {
+                        Dashboard.render();
+                        const hasContent = document.getElementById('pageContent').children.length > 0;
+                        this.recordResult('Dashboard Rendering', hasContent, 
+                            hasContent ? 'Dashboard renders successfully' : 'Dashboard rendering failed');
+                    }
+                    
+                    // Test Contacts rendering  
+                    if (typeof Contacts !== 'undefined') {
+                        Contacts.render();
+                        const hasContent = document.getElementById('pageContent').children.length > 0;
+                        this.recordResult('Contacts Rendering', hasContent, 
+                            hasContent ? 'Contacts renders successfully' : 'Contacts rendering failed');
+                    }
+                    
+                    // Clear test area
+                    testArea.innerHTML = '';
+                } catch (error) {
+                    this.recordResult('Rendering Error', false, `Rendering test failed: ${error.message}`);
+                }
+                
+                // Test external library integration
+                try {
+                    const hasBootstrap = typeof bootstrap !== 'undefined';
+                    const hasChartJS = typeof Chart !== 'undefined';
+                    const hasjQuery = typeof $ !== 'undefined';
+                    const hasDataTables = hasjQuery && typeof $.fn.DataTable !== 'undefined';
+                    
+                    this.recordResult('Bootstrap Integration', hasBootstrap, 
+                        hasBootstrap ? 'Bootstrap JavaScript loaded' : 'Bootstrap JavaScript missing');
+                        
+                    this.recordResult('Chart.js Integration', hasChartJS, 
+                        hasChartJS ? 'Chart.js library loaded' : 'Chart.js library missing');
+                        
+                    this.recordResult('jQuery Integration', hasjQuery, 
+                        hasjQuery ? 'jQuery library loaded' : 'jQuery library missing');
+                        
+                    this.recordResult('DataTables Integration', hasDataTables, 
+                        hasDataTables ? 'DataTables plugin loaded' : 'DataTables plugin missing');
+                } catch (error) {
+                    this.recordResult('Library Error', false, `Library integration test failed: ${error.message}`);
+                }
+            }
+            
+            // Display final results summary
+            displayFinalResults() {
+                const totalTests = this.passedCount + this.failedCount;
+                const successRate = totalTests > 0 ? Math.round((this.passedCount / totalTests) * 100) : 0;
+                
+                const summaryClass = this.failedCount === 0 ? 'test-pass' : 'test-fail';
+                const summaryIcon = this.failedCount === 0 ? '🎉' : '⚠️';
+                
+                this.displayResult('Test Summary', this.failedCount === 0, 
+                    `${summaryIcon} Tests completed: ${this.passedCount}/${totalTests} passed (${successRate}%)`,
+                    this.failedCount === 0 ? 'All frontend components are working correctly!' : 'Some issues were found that need attention.'
+                );
+            }
+        }
+        
+        // Global test instance
+        const tester = new FrontendTester();
+        
+        // Global test functions
+        function runAllTests() {
+            tester.runAllTests();
+        }
+        
+        function testCoreComponents() {
+            tester.clear();
+            tester.totalTests = 10;
+            tester.testCoreComponents();
+        }
+        
+        function testPageComponents() {
+            tester.clear();
+            tester.totalTests = 8;
+            tester.testPageComponents();
+        }
+        
+        function testIntegration() {
+            tester.clear();
+            tester.totalTests = 7;
+            tester.testIntegration();
+        }
+        
+        function clearResults() {
+            tester.clear();
+        }
+        
+        // Auto-run basic tests on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                tester.displayResult('System Ready', true, 'Frontend integration test environment loaded', 'Ready to run tests');
+            }, 500);
+        });
+    </script>
+</body>
+</html>
