@@ -1,9 +1,9 @@
 RewriteEngine On
 
-# Handle Angular HTML5 mode and API routing
+# Unified CRM routing through bootstrap
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(?!api/) index.php [QSA,L]
+RewriteRule ^(.*)$ bootstrap.php [QSA,L]
 
 # Basic security (without Header module)
 <IfModule mod_headers.c>

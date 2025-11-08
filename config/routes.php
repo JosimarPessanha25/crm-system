@@ -2,221 +2,203 @@
 
 declare(strict_types=1);
 
-use Slim\App;
-use Psr\Container\ContainerInterface;
+/**
+ * Complete CRM API Routes
+ */
+
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
-return function (App $app, ContainerInterface $container): void {
+return function ($app, $container) {
     
-    // Health check endpoint
-    $app->get('/health', function (Request $request, Response $response): Response {
+    // CORS middleware
+    $app->add(function ($request, $handler) {
+        $response = $handler->handle($request);
+        return $response
+            ->withHeader('Access-Control-Allow-Origin', '*')
+            ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+            ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    });
+
+    // Frontend dashboard route
+    $app->get('/app', function (Request $request, Response $response) {
+        $appFile = __DIR__ . '/../public/app.html';
+        if (file_exists($appFile)) {
+            $response->getBody()->write(file_get_contents($appFile));
+            return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
+        }
+        $response->getBody()->write('<h1>CRM Dashboard</h1><p>Dashboard not found. Check installation.</p>');
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8');
+    });
+
+    $app->get('/dashboard', function (Request $request, Response $response) {
+        return $response->withHeader('Location', '/app')->withStatus(302);
+    });
+
+    // Health check
+    $app->get('/api/health', function (Request $request, Response $response) use ($container) {
+        $db = $container->get('database');
+        
         $health = [
             'status' => 'healthy',
             'timestamp' => date('c'),
             'version' => '1.0.0',
-            'environment' => $_ENV['APP_ENV'] ?? 'production'
+            'database' => $db ? 'connected' : 'disconnected',
+            'tables' => []
         ];
+        
+        if ($db && $db->getConnection()) {
+            try {
+                $tables = $db->query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
+                $health['tables'] = array_column($tables, 'name');
+            } catch (Exception $e) {
+                $health['database'] = 'error: ' . $e->getMessage();
+            }
+        }
         
         $response->getBody()->write(json_encode($health));
         return $response->withHeader('Content-Type', 'application/json');
     });
-    
-    // API Documentation endpoint
-    $app->get('/api/docs', function (Request $request, Response $response): Response {
-        $docs = [
-            'name' => 'CRM API',
-            'version' => '1.0.0',
-            'description' => 'Complete CRM system API',
-            'endpoints' => [
-                'auth' => [
-                    'POST /auth/login' => 'User authentication',
-                    'POST /auth/register' => 'User registration',
-                    'POST /auth/refresh' => 'Token refresh',
-                    'POST /auth/logout' => 'User logout'
-                ],
-                'users' => [
-                    'GET /api/users' => 'List users',
-                    'POST /api/users' => 'Create user',
-                    'GET /api/users/{id}' => 'Get user details',
-                    'PUT /api/users/{id}' => 'Update user',
-                    'DELETE /api/users/{id}' => 'Delete user'
-                ],
-                'companies' => [
-                    'GET /api/companies' => 'List companies',
-                    'POST /api/companies' => 'Create company',
-                    'GET /api/companies/{id}' => 'Get company details',
-                    'PUT /api/companies/{id}' => 'Update company',
-                    'DELETE /api/companies/{id}' => 'Delete company'
-                ],
-                'contacts' => [
-                    'GET /api/contacts' => 'List contacts',
-                    'POST /api/contacts' => 'Create contact',
-                    'GET /api/contacts/{id}' => 'Get contact details',
-                    'PUT /api/contacts/{id}' => 'Update contact',
-                    'DELETE /api/contacts/{id}' => 'Delete contact'
-                ],
-                'opportunities' => [
-                    'GET /api/opportunities' => 'List opportunities',
-                    'POST /api/opportunities' => 'Create opportunity',
-                    'GET /api/opportunities/{id}' => 'Get opportunity details',
-                    'PUT /api/opportunities/{id}' => 'Update opportunity',
-                    'DELETE /api/opportunities/{id}' => 'Delete opportunity'
-                ],
-                'activities' => [
-                    'GET /api/activities' => 'List activities',
-                    'POST /api/activities' => 'Create activity',
-                    'GET /api/activities/{id}' => 'Get activity details',
-                    'PUT /api/activities/{id}' => 'Update activity',
-                    'DELETE /api/activities/{id}' => 'Delete activity'
-                ]
-            ]
-        ];
+
+    // Authentication endpoints
+    $app->post('/api/auth/login', function (Request $request, Response $response) use ($container) {
+        $data = json_decode($request->getBody()->getContents(), true);
+        $db = $container->get('database');
         
-        $response->getBody()->write(json_encode($docs, JSON_PRETTY_PRINT));
-        return $response->withHeader('Content-Type', 'application/json');
-    });
-    
-    // Authentication routes
-    $app->group('/auth', function () use ($app, $container) {
-        
-        // Create AuthController instance
-        $authController = function() use ($container) {
-            return new \App\Controllers\AuthController(
-                $container->get('authService'),
-                $container->get('logger')
-            );
-        };
-        
-        // Public authentication endpoints
-        $app->post('/login', [$authController(), 'login']);
-        $app->post('/register', [$authController(), 'register']);
-        $app->post('/refresh', [$authController(), 'refresh']);
-        $app->post('/forgot-password', [$authController(), 'forgotPassword']);
-        $app->post('/reset-password', [$authController(), 'resetPassword']);
-        
-        // Protected endpoints (require authentication)
-        $app->post('/logout', [$authController(), 'logout']);
-        $app->get('/profile', [$authController(), 'getProfile']);
-        $app->put('/profile', [$authController(), 'updateProfile']);
-        $app->post('/change-password', [$authController(), 'changePassword']);
-        
-    });
-    
-    // API routes (protected by AuthMiddleware)
-    $app->group('/api', function () use ($app, $container) {
-        
-        // Users CRUD
-        $app->group('/users', function () use ($app, $container) {
-            $userController = function() use ($container) {
-                return new \App\Controllers\UserController(
-                    $container->get('userService'),
-                    $container->get('logger')
-                );
-            };
-            
-            $app->get('', [$userController(), 'index']);
-            $app->post('', [$userController(), 'create']);
-            $app->get('/{id}', [$userController(), 'show']);
-            $app->put('/{id}', [$userController(), 'update']);
-            $app->delete('/{id}', [$userController(), 'delete']);
-            $app->post('/{id}/restore', [$userController(), 'restore']);
-            $app->get('/{id}/stats', [$userController(), 'stats']);
-        });
-        
-        // Companies CRUD
-        $app->group('/companies', function () use ($app, $container) {
-            $companyController = function() use ($container) {
-                return new \App\Controllers\CompanyController(
-                    $container->get('companyService'),
-                    $container->get('logger')
-                );
-            };
-            
-            $app->get('', [$companyController(), 'index']);
-            $app->post('', [$companyController(), 'create']);
-            $app->get('/{id}', [$companyController(), 'show']);
-            $app->put('/{id}', [$companyController(), 'update']);
-            $app->delete('/{id}', [$companyController(), 'delete']);
-            $app->get('/{id}/contacts', [$companyController(), 'contacts']);
-            $app->get('/{id}/opportunities', [$companyController(), 'opportunities']);
-            $app->get('/{id}/stats', [$companyController(), 'stats']);
-        });
-        
-        // Contacts CRUD
-        $app->group('/contacts', function () use ($app, $container) {
-            $contactController = function() use ($container) {
-                return new \App\Controllers\ContactController(
-                    $container->get('contactService'),
-                    $container->get('logger')
-                );
-            };
-            
-            $app->get('', [$contactController(), 'index']);
-            $app->post('', [$contactController(), 'create']);
-            $app->get('/{id}', [$contactController(), 'show']);
-            $app->put('/{id}', [$contactController(), 'update']);
-            $app->delete('/{id}', [$contactController(), 'delete']);
-            $app->get('/{id}/timeline', [$contactController(), 'timeline']);
-            $app->get('/{id}/opportunities', [$contactController(), 'opportunities']);
-            $app->put('/{id}/score', [$contactController(), 'updateScore']);
-            $app->post('/{id}/tags', [$contactController(), 'addTags']);
-        });
-        
-        // Opportunities CRUD
-        $app->group('/opportunities', function () use ($app, $container) {
-            $opportunityController = function() use ($container) {
-                return new \App\Controllers\OpportunityController(
-                    $container->get('opportunityService'),
-                    $container->get('logger')
-                );
-            };
-            
-            $app->get('', [$opportunityController(), 'index']);
-            $app->get('/pipeline', [$opportunityController(), 'pipeline']);
-            $app->get('/stats', [$opportunityController(), 'stats']);
-            $app->post('', [$opportunityController(), 'create']);
-            $app->get('/{id}', [$opportunityController(), 'show']);
-            $app->put('/{id}', [$opportunityController(), 'update']);
-            $app->delete('/{id}', [$opportunityController(), 'delete']);
-            $app->put('/{id}/stage', [$opportunityController(), 'moveStage']);
-            $app->get('/{id}/activities', [$opportunityController(), 'activities']);
-            $app->post('/{id}/close', [$opportunityController(), 'close']);
-        });
-        
-        // Activities CRUD
-        $app->group('/activities', function () use ($app, $container) {
-            $activityController = function() use ($container) {
-                return new \App\Controllers\ActivityController(
-                    $container->get('activityService'),
-                    $container->get('logger')
-                );
-            };
-            
-            $app->get('', [$activityController(), 'index']);
-            $app->get('/calendar', [$activityController(), 'calendar']);
-            $app->get('/upcoming', [$activityController(), 'upcoming']);
-            $app->get('/stats', [$activityController(), 'stats']);
-            $app->post('', [$activityController(), 'create']);
-            $app->get('/{id}', [$activityController(), 'show']);
-            $app->put('/{id}', [$activityController(), 'update']);
-            $app->delete('/{id}', [$activityController(), 'delete']);
-            $app->post('/{id}/complete', [$activityController(), 'complete']);
-            $app->put('/{id}/reschedule', [$activityController(), 'reschedule']);
-        });
-        
-    });
-    
-    // Catch-all 404
-    $app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', 
-        function (Request $request, Response $response): Response {
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'message' => 'Route not found',
-                'error_code' => 'NOT_FOUND',
-                'timestamp' => date('c')
-            ]));
-            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        if (!$db || !isset($data['email']) || !isset($data['password'])) {
+            $response->getBody()->write(json_encode(['error' => 'Invalid credentials']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
-    );
+        
+        try {
+            $user = $db->query("SELECT * FROM usuarios WHERE email = ? AND ativo = 1", [$data['email']]);
+            
+            if (empty($user) || !password_verify($data['password'], $user[0]['senha_hash'])) {
+                $response->getBody()->write(json_encode(['error' => 'Invalid credentials']));
+                return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+            }
+            
+            $userData = $user[0];
+            unset($userData['senha_hash']);
+            
+            // Update last login
+            $db->execute("UPDATE usuarios SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?", [$userData['id']]);
+            
+            // Generate JWT token (simplified)
+            $token = base64_encode(json_encode([
+                'user_id' => $userData['id'],
+                'email' => $userData['email'],
+                'role' => $userData['role'],
+                'exp' => time() + (24 * 60 * 60) // 24 hours
+            ]));
+            
+            $response->getBody()->write(json_encode([
+                'token' => $token,
+                'user' => $userData
+            ]));
+            return $response->withHeader('Content-Type', 'application/json');
+            
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode(['error' => 'Server error']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    });
+
+    // Users CRUD
+    $app->get('/api/usuarios', function (Request $request, Response $response) use ($container) {
+        $db = $container->get('database');
+        try {
+            $usuarios = $db->query("SELECT id, nome, email, role, ativo, created_at FROM usuarios ORDER BY nome");
+            $response->getBody()->write(json_encode($usuarios));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    });
+
+    // Empresas CRUD
+    $app->get('/api/empresas', function (Request $request, Response $response) use ($container) {
+        $db = $container->get('database');
+        try {
+            $empresas = $db->query("SELECT * FROM empresas ORDER BY nome");
+            $response->getBody()->write(json_encode($empresas));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    });
+
+    // Contatos CRUD
+    $app->get('/api/contatos', function (Request $request, Response $response) use ($container) {
+        $db = $container->get('database');
+        try {
+            $contatos = $db->query("
+                SELECT c.*, e.nome as empresa_nome, u.nome as owner_nome
+                FROM contatos c
+                LEFT JOIN empresas e ON c.empresa_id = e.id
+                LEFT JOIN usuarios u ON c.owner_id = u.id
+                ORDER BY c.nome
+            ");
+            $response->getBody()->write(json_encode($contatos));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    });
+
+    // Oportunidades CRUD  
+    $app->get('/api/oportunidades', function (Request $request, Response $response) use ($container) {
+        $db = $container->get('database');
+        try {
+            $oportunidades = $db->query("
+                SELECT o.*, c.nome as contato_nome, e.nome as empresa_nome, u.nome as owner_nome
+                FROM oportunidades o
+                LEFT JOIN contatos c ON o.contato_id = c.id
+                LEFT JOIN empresas e ON o.empresa_id = e.id
+                LEFT JOIN usuarios u ON o.owner_id = u.id
+                ORDER BY o.created_at DESC
+            ");
+            $response->getBody()->write(json_encode($oportunidades));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    });
+
+    // Dashboard statistics
+    $app->get('/api/dashboard/stats', function (Request $request, Response $response) use ($container) {
+        $db = $container->get('database');
+        try {
+            $stats = [
+                'usuarios' => $db->query("SELECT COUNT(*) as count FROM usuarios")[0]['count'],
+                'empresas' => $db->query("SELECT COUNT(*) as count FROM empresas")[0]['count'],
+                'contatos' => $db->query("SELECT COUNT(*) as count FROM contatos")[0]['count'],
+                'oportunidades' => $db->query("SELECT COUNT(*) as count FROM oportunidades")[0]['count'],
+                'oportunidades_abertas' => $db->query("SELECT COUNT(*) as count FROM oportunidades WHERE estagio NOT IN ('closed_won', 'closed_lost')")[0]['count'],
+                'valor_pipeline' => $db->query("SELECT COALESCE(SUM(valor_estimado), 0) as total FROM oportunidades WHERE estagio NOT IN ('closed_won', 'closed_lost')")[0]['total']
+            ];
+            
+            $response->getBody()->write(json_encode($stats));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    });
+
+    // Serve frontend
+    $app->get('/', function (Request $request, Response $response) {
+        $html = file_get_contents(__DIR__ . '/../public/app.html');
+        $response->getBody()->write($html);
+        return $response->withHeader('Content-Type', 'text/html');
+    });
+
+    // Options for CORS
+    $app->options('/{routes:.+}', function ($request, $response) {
+        return $response;
+    });
 };

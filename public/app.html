@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM System - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.3.11/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid #475569;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-nav {
+            padding: 16px 0;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 24px;
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 32px;
+        }
+
+        .header {
+            margin-bottom: 32px;
+        }
+
+        .header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #64748b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .change {
+            font-size: 0.875rem;
+            color: #10b981;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .text-success { color: #10b981; }
+        .text-warning { color: #f59e0b; }
+        .text-error { color: #ef4444; }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="app-container">
+            <!-- Sidebar -->
+            <div class="sidebar" :class="{ 'mobile-open': sidebarOpen }">
+                <div class="sidebar-header">
+                    <h1>🚀 CRM System</h1>
+                </div>
+                <nav class="sidebar-nav">
+                    <button class="nav-item" :class="{ active: currentView === 'dashboard' }" @click="setView('dashboard')">
+                        📊 Dashboard
+                    </button>
+                    <button class="nav-item" :class="{ active: currentView === 'contatos' }" @click="setView('contatos')">
+                        👥 Contatos
+                    </button>
+                    <button class="nav-item" :class="{ active: currentView === 'empresas' }" @click="setView('empresas')">
+                        🏢 Empresas
+                    </button>
+                    <button class="nav-item" :class="{ active: currentView === 'oportunidades' }" @click="setView('oportunidades')">
+                        💼 Oportunidades
+                    </button>
+                    <button class="nav-item" :class="{ active: currentView === 'usuarios' }" @click="setView('usuarios')">
+                        👤 Usuários
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Dashboard View -->
+                <div v-show="currentView === 'dashboard'">
+                    <div class="header">
+                        <h2>Dashboard</h2>
+                        <p>Visão geral do seu CRM</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total de Contatos</h3>
+                            <div class="value">{{ stats.contatos || 0 }}</div>
+                            <div class="change">+12% este mês</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Empresas</h3>
+                            <div class="value">{{ stats.empresas || 0 }}</div>
+                            <div class="change">+8% este mês</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Oportunidades Abertas</h3>
+                            <div class="value">{{ stats.oportunidades_abertas || 0 }}</div>
+                            <div class="change">+15% este mês</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Valor do Pipeline</h3>
+                            <div class="value">R$ {{ formatCurrency(stats.valor_pipeline || 0) }}</div>
+                            <div class="change">+25% este mês</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Oportunidades Recentes</h3>
+                        </div>
+                        <div class="card-body">
+                            <div v-if="loading" class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table v-else class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Valor</th>
+                                        <th>Estágio</th>
+                                        <th>Contato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="oport in recentOpportunities" :key="oport.id">
+                                        <td>{{ oport.titulo }}</td>
+                                        <td>R$ {{ formatCurrency(oport.valor_estimado) }}</td>
+                                        <td>
+                                            <span class="badge" :class="getBadgeClass(oport.estagio)">
+                                                {{ formatStage(oport.estagio) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ oport.contato_nome || 'N/A' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contatos View -->
+                <div v-show="currentView === 'contatos'">
+                    <div class="header">
+                        <h2>Contatos</h2>
+                        <p>Gerencie seus contatos e leads</p>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <button class="btn btn-primary" @click="showModal('contato')">
+                            ➕ Novo Contato
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div v-if="loading" class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table v-else class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>E-mail</th>
+                                        <th>Empresa</th>
+                                        <th>Cargo</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="contato in contatos" :key="contato.id">
+                                        <td>{{ contato.nome }}</td>
+                                        <td>{{ getFirstEmail(contato.emails) }}</td>
+                                        <td>{{ contato.empresa_nome || 'N/A' }}</td>
+                                        <td>{{ contato.cargo || 'N/A' }}</td>
+                                        <td>
+                                            <span class="badge badge-success">
+                                                {{ contato.status || 'Ativo' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empresas View -->
+                <div v-show="currentView === 'empresas'">
+                    <div class="header">
+                        <h2>Empresas</h2>
+                        <p>Gerencie as empresas cadastradas</p>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <button class="btn btn-primary" @click="showModal('empresa')">
+                            ➕ Nova Empresa
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div v-if="loading" class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table v-else class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>CNPJ</th>
+                                        <th>Setor</th>
+                                        <th>Telefone</th>
+                                        <th>Website</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="empresa in empresas" :key="empresa.id">
+                                        <td>{{ empresa.nome }}</td>
+                                        <td>{{ empresa.cnpj_cpf || 'N/A' }}</td>
+                                        <td>{{ empresa.setor || 'N/A' }}</td>
+                                        <td>{{ empresa.telefone || 'N/A' }}</td>
+                                        <td>{{ empresa.website || 'N/A' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Oportunidades View -->
+                <div v-show="currentView === 'oportunidades'">
+                    <div class="header">
+                        <h2>Oportunidades</h2>
+                        <p>Acompanhe seu pipeline de vendas</p>
+                    </div>
+
+                    <div style="margin-bottom: 24px;">
+                        <button class="btn btn-primary" @click="showModal('oportunidade')">
+                            ➕ Nova Oportunidade
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div v-if="loading" class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table v-else class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Valor</th>
+                                        <th>Estágio</th>
+                                        <th>Probabilidade</th>
+                                        <th>Contato</th>
+                                        <th>Empresa</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="oport in oportunidades" :key="oport.id">
+                                        <td>{{ oport.titulo }}</td>
+                                        <td>R$ {{ formatCurrency(oport.valor_estimado) }}</td>
+                                        <td>
+                                            <span class="badge" :class="getBadgeClass(oport.estagio)">
+                                                {{ formatStage(oport.estagio) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ oport.probabilidade }}%</td>
+                                        <td>{{ oport.contato_nome || 'N/A' }}</td>
+                                        <td>{{ oport.empresa_nome || 'N/A' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usuarios View -->
+                <div v-show="currentView === 'usuarios'">
+                    <div class="header">
+                        <h2>Usuários</h2>
+                        <p>Gerencie os usuários do sistema</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div v-if="loading" class="loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table v-else class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>E-mail</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Criado em</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="usuario in usuarios" :key="usuario.id">
+                                        <td>{{ usuario.nome }}</td>
+                                        <td>{{ usuario.email }}</td>
+                                        <td>
+                                            <span class="badge badge-info">{{ usuario.role }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge" :class="usuario.ativo ? 'badge-success' : 'badge-warning'">
+                                                {{ usuario.ativo ? 'Ativo' : 'Inativo' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ formatDate(usuario.created_at) }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div v-if="modal.show" class="modal-overlay" @click.self="closeModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>{{ modal.title }}</h3>
+                </div>
+                <div class="modal-body">
+                    <!-- Contato Form -->
+                    <div v-if="modal.type === 'contato'">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <input v-model="modal.data.nome" class="form-input" type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <input v-model="modal.data.email" class="form-input" type="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cargo</label>
+                            <input v-model="modal.data.cargo" class="form-input" type="text">
+                        </div>
+                    </div>
+
+                    <!-- Empresa Form -->
+                    <div v-if="modal.type === 'empresa'">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <input v-model="modal.data.nome" class="form-input" type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CNPJ</label>
+                            <input v-model="modal.data.cnpj_cpf" class="form-input" type="text">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Setor</label>
+                            <input v-model="modal.data.setor" class="form-input" type="text">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <input v-model="modal.data.telefone" class="form-input" type="text">
+                        </div>
+                    </div>
+
+                    <!-- Oportunidade Form -->
+                    <div v-if="modal.type === 'oportunidade'">
+                        <div class="form-group">
+                            <label class="form-label">Título</label>
+                            <input v-model="modal.data.titulo" class="form-input" type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Valor Estimado</label>
+                            <input v-model="modal.data.valor_estimado" class="form-input" type="number" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Estágio</label>
+                            <select v-model="modal.data.estagio" class="form-input">
+                                <option value="prospecting">Prospecção</option>
+                                <option value="qualification">Qualificação</option>
+                                <option value="proposal">Proposta</option>
+                                <option value="negotiation">Negociação</option>
+                                <option value="closed_won">Fechado Ganho</option>
+                                <option value="closed_lost">Fechado Perdido</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @click="closeModal">Cancelar</button>
+                    <button class="btn btn-primary" @click="saveModal" :disabled="loading">
+                        {{ loading ? 'Salvando...' : 'Salvar' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    currentView: 'dashboard',
+                    sidebarOpen: false,
+                    loading: false,
+                    stats: {},
+                    contatos: [],
+                    empresas: [],
+                    oportunidades: [],
+                    usuarios: [],
+                    recentOpportunities: [],
+                    modal: {
+                        show: false,
+                        type: '',
+                        title: '',
+                        data: {}
+                    }
+                };
+            },
+            mounted() {
+                this.loadData();
+            },
+            methods: {
+                async loadData() {
+                    this.loading = true;
+                    try {
+                        const [statsRes, contatosRes, empresasRes, oportunidadesRes, usuariosRes] = await Promise.all([
+                            axios.get('/api/dashboard/stats'),
+                            axios.get('/api/contatos'),
+                            axios.get('/api/empresas'),
+                            axios.get('/api/oportunidades'),
+                            axios.get('/api/usuarios')
+                        ]);
+
+                        this.stats = statsRes.data;
+                        this.contatos = contatosRes.data;
+                        this.empresas = empresasRes.data;
+                        this.oportunidades = oportunidadesRes.data;
+                        this.usuarios = usuariosRes.data;
+                        this.recentOpportunities = this.oportunidades.slice(0, 5);
+                    } catch (error) {
+                        console.error('Error loading data:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                setView(view) {
+                    this.currentView = view;
+                    this.sidebarOpen = false;
+                },
+
+                showModal(type) {
+                    this.modal = {
+                        show: true,
+                        type,
+                        title: `Novo ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+                        data: {}
+                    };
+                },
+
+                closeModal() {
+                    this.modal.show = false;
+                    this.modal.data = {};
+                },
+
+                async saveModal() {
+                    this.loading = true;
+                    try {
+                        const endpoint = `/api/${this.modal.type}s`;
+                        await axios.post(endpoint, this.modal.data);
+                        this.closeModal();
+                        this.loadData();
+                    } catch (error) {
+                        console.error('Error saving:', error);
+                        alert('Erro ao salvar. Tente novamente.');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                formatCurrency(value) {
+                    if (!value) return '0,00';
+                    return new Intl.NumberFormat('pt-BR').format(value);
+                },
+
+                formatDate(dateString) {
+                    if (!dateString) return 'N/A';
+                    return new Date(dateString).toLocaleDateString('pt-BR');
+                },
+
+                formatStage(stage) {
+                    const stages = {
+                        'prospecting': 'Prospecção',
+                        'qualification': 'Qualificação', 
+                        'proposal': 'Proposta',
+                        'negotiation': 'Negociação',
+                        'closed_won': 'Fechado Ganho',
+                        'closed_lost': 'Fechado Perdido'
+                    };
+                    return stages[stage] || stage;
+                },
+
+                getBadgeClass(stage) {
+                    const classes = {
+                        'prospecting': 'badge-info',
+                        'qualification': 'badge-warning',
+                        'proposal': 'badge-warning',
+                        'negotiation': 'badge-warning',
+                        'closed_won': 'badge-success',
+                        'closed_lost': 'badge-secondary'
+                    };
+                    return classes[stage] || 'badge-info';
+                },
+
+                getFirstEmail(emails) {
+                    if (!emails) return 'N/A';
+                    try {
+                        const emailArray = JSON.parse(emails);
+                        return emailArray[0] || 'N/A';
+                    } catch {
+                        return emails;
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

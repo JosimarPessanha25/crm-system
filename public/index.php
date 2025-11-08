@@ -3,6 +3,23 @@
 declare(strict_types=1);
 
 /**
+ * CRM System - Unified Entry Point
+ * Routes to bootstrap system for complete functionality
+ */
+
+// Check if bootstrap exists and delegate to it
+$bootstrapFile = __DIR__ . '/bootstrap.php';
+if (file_exists($bootstrapFile)) {
+    require_once $bootstrapFile;
+    
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    handleRequest($uri, $method);
+    exit;
+}
+
+/**
  * CRM System Entry Point
  * Robust initialization with fallbacks
  */
