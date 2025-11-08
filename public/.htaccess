@@ -1,29 +1,32 @@
 RewriteEngine On
 
-# Handle Angular HTML5 mode
+# Handle Angular HTML5 mode and API routing
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(?!api/) index.php [QSA,L]
 
-# Security headers
-Header always set X-Content-Type-Options nosniff
-Header always set X-Frame-Options DENY  
-Header always set X-XSS-Protection "1; mode=block"
-Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
-Header always set Referrer-Policy "strict-origin-when-cross-origin"
+# Basic security (without Header module)
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY  
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header unset Server
+</IfModule>
 
-# Remove server signature
-ServerTokens Prod
-Header unset Server
+# Cache static files (only if mod_expires is available)
+<IfModule mod_expires.c>
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+        ExpiresActive On
+        ExpiresDefault "access plus 1 month"
+        <IfModule mod_headers.c>
+            Header append Cache-Control "public, immutable"
+        </IfModule>
+    </FilesMatch>
+</IfModule>
 
-# Cache static files
-<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
-    ExpiresActive On
-    ExpiresDefault "access plus 1 month"
-    Header append Cache-Control "public, immutable"
-</FilesMatch>
-
-# Compress files
+# Compress files (only if mod_deflate is available)
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/plain
     AddOutputFilterByType DEFLATE text/html

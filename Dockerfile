@@ -44,5 +44,9 @@ COPY .docker/apache.conf /etc/apache2/sites-available/000-default.conf
 # Expose port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Copy startup script
+COPY start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh
+
+# Start Apache with startup script
+CMD ["/usr/local/bin/start.sh"]
