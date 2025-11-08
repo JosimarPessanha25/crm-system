@@ -1,6 +1,51 @@
-# CRM System - Sistema de Gestão de Relacionamento com Cliente
+# 🚀 CRM System - Demo Online
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/JosimarPessanha25/crm-system?quickstart=1)
+
+## 🎯 **TESTE AGORA - CLIQUE NO BOTÃO ACIMA!** ⬆️
 
 Um sistema CRM completo desenvolvido em PHP com frontend moderno em JavaScript, projetado para gerenciar contatos, oportunidades de vendas, atividades e relacionamentos com clientes.
+
+### ⚡ **Acesso Instantâneo:**
+1. **Clique no badge "Open in Codespaces"** ☝️
+2. **Aguarde 2-3 minutos** para carregar
+3. **Sistema funcionando!** 🎉
+
+### 🔐 **Credenciais de Teste:**
+- **Email:** `admin@admin.com`
+- **Senha:** `admin123`
+
+---
+
+## 🌟 **Links de Demonstração**
+
+### 🚀 **Teste Instantâneo (GitHub Codespaces)**
+[![Open in Codespaces](https://img.shields.io/badge/Codespaces-Teste%20Agora-blue?style=for-the-badge&logo=github)](https://codespaces.new/JosimarPessanha25/crm-system?quickstart=1)
+
+**👆 Clique para abrir ambiente completo em 2 minutos!**
+
+### 🌐 **Outras Opções de Teste**
+
+| Plataforma | Status | Link | Descrição |
+|-----------|---------|------|-----------|
+| 🔴 **Codespaces** | ✅ **Ativo** | [Testar Agora](https://codespaces.new/JosimarPessanha25/crm-system?quickstart=1) | Ambiente completo (60h grátis/mês) |
+| 🟠 **Heroku** | 🚧 Em breve | `heroku-demo.com` | URL pública para demonstrações |
+| 🔵 **Azure** | 🚧 Em breve | `azure-demo.com` | Hosting profissional |
+| 🟢 **Railway** | 🚧 Em breve | `railway-demo.com` | Deploy moderno |
+
+### 📱 **QR Code para Teste Móvel**
+```
+█████████████████████████████
+█████████████████████████████
+████ ▄▄▄▄▄ █▀ █▀██ ▄▄▄▄▄ ████
+████ █   █ █▀▀▀▀ ▀█ █   █ ████
+████ █▄▄▄█ ██▄ ▀▄ █ █▄▄▄█ ████
+████▄▄▄▄▄▄▄█ ▀▄█ █▄▄▄▄▄▄▄████
+████▄▄ ▄█▄▄ ▄▀▄█▄ ▄█ ▄▀ █████
+[Escaneie para testar no mobile]
+```
+
+---
 
 ## 📋 Funcionalidades
 
