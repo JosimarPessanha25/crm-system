@@ -1,5 +1,4 @@
-<?php declare(strict_types=1);
-
+<?php
 /**
  * Unified CRM System Bootstrap
  * Complete integration of database, API, auth, and frontend

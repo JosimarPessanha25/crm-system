@@ -1,5 +1,4 @@
-﻿<?php declare(strict_types=1);
-
+﻿<?php
 /**
  * CRM System - Clean Entry Point
  * Delegates to bootstrap.php only
