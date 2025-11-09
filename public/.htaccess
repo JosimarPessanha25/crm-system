@@ -1,9 +1,9 @@
 RewriteEngine On
 
-# Route all requests to bootstrap.php (except existing files)
+# Route all requests to index.php (except existing files)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ bootstrap.php [QSA,L]
+RewriteRule ^(.*)$ index.php [QSA,L]
 
 # Basic security (without Header module)
 <IfModule mod_headers.c>
